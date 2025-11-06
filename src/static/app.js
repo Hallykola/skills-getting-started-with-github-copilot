@@ -20,11 +20,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Build participants HTML (bulleted list or a friendly info message)
+        const participantsHtml =
+          details.participants && details.participants.length
+            ? `<ul class="participants-list">${details.participants
+                .map((p) => `<li class="participant-item">${p}</li>`)
+                .join("")}</ul>`
+            : `<p class="info">No participants yet</p>`;
+        //  console log variabes here to check why participants html is not showing
+        console.log("Activity:", name);
+        console.log("Participants:", details.participants);
+        console.log("Participants HTML:", participantsHtml);
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          ${participantsHtml}
+          <div class="participants-section">
+            <h5>Participants</h5>
+            ${participantsHtml}
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -62,6 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities to show updated participants
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
