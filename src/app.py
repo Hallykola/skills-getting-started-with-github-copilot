@@ -7,7 +7,7 @@ for extracurricular activities at Mergington High School.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 import os
 from pathlib import Path
 
@@ -85,7 +85,14 @@ def root():
 
 @app.get("/activities")
 def get_activities():
-    return activities
+    # Return activities with headers to prevent clients (browsers) from caching
+    # the response. This helps ensure the UI sees up-to-date participants
+    # immediately after signup/remove operations.
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+    }
+    return JSONResponse(content=activities, headers=headers)
 
 
 @app.post("/activities/{activity_name}/signup")
@@ -105,3 +112,20 @@ def signup_for_activity(activity_name: str, email: str):
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.delete("/activities/{activity_name}/participants")
+def remove_participant(activity_name: str, email: str):
+    """Remove/unregister a participant (by email) from an activity."""
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    activity = activities[activity_name]
+
+    # Validate participant exists
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=404, detail="Participant not found in this activity")
+
+    activity["participants"].remove(email)
+    return {"message": f"Removed {email} from {activity_name}"}
